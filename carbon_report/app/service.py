@@ -25,7 +25,7 @@ def estimate_carbon(data: CarbonEstimateRequest) -> CarbonEstimateResponse:
             )
         details.append({
             "day": schedule.day,
-            "transportMode": "bus",  # 실제로는 동적 분석 가능
+            "transportMode": "bus", 
             "vehicleCarbon": round(day_expected, 1),
             "actualCarbon": round(day_actual, 1)
         })
