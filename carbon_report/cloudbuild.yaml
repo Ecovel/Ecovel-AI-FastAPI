@@ -1,0 +1,4 @@
+steps:
+  - name: 'alpine'
+    entrypoint: 'echo'
+    args: ['trigger cloudbuild to create service account']
