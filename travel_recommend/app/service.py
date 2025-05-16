@@ -19,21 +19,21 @@ model = GenerativeModel("gemini-1.5-flash")
 translator = Translator()
 
 PLACE_NAME_MAP = {
-    "제주 그린로드 산책로": "제주 그린로드",
-    "플로깅 가능 해변": "이호테우해변",
-    "곶자왈 숲길 트래킹 코스": "곶자왈",
-    "제주 전통 가옥 체험": "제주민속촌",
-    "우도 등대 전망대": "우도등대공원",
-    "바다 전망 카페": "해변 카페",
-    "감귤농장 체험": "감귤체험농장",
-    "제주 재생에너지 테마파크": "에너지미래관",
-    "바다 조망 카페": "해변 카페",
-    "우도 해변 카페 (친환경 인증)": "우도 카페",
-    "제주플로우 프로그램 참여 가능한 농장": "제주농촌체험마을"
+    "Jeju Green Road Trail": "Jeju Green Road",
+    "Beach where plogging is allowed": "Iho Tewoo Beach",
+    "Gotjawal Forest Trail Trekking Course": "Gotjawal",
+    "Jeju Traditional House Experience": "Jeju Folk Village",
+    "Udo Lighthouse Observatory": "Udo Lighthouse Park",
+    "Café with Ocean View": "Beach Cafe",
+    "Tangerine Farm Experience": "Tangerine Experience Farm",
+    "Jeju Renewable Energy Theme Park": "Energy Future Museum",
+    "Café with Ocean View": "Beach Cafe",
+    "Udo Beach Cafe (Eco-friendly certification)": "Udo Cafe",
+    "Farms where you can participate in the Jeju Flow Program": "Jeju Rural Experience Village"
 }
 
 def get_google_place_image(place_name: str, api_key: str) -> str:
-    query = f"제주 {place_name}"
+    query = f"Jeju {place_name}"
     find_url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
     params = {
         "input": query,
@@ -116,17 +116,17 @@ def generate_schedule(request: TravelRequest) -> TravelResponse:
     num_days = int(match.group(1)) if match else 3
 
     prompt = (
-        f"당신은 여행 키워드 추천 전문가입니다. 아래 정보를 바탕으로 여행 일정의 장소 키워드를 JSON 형식으로 출력하세요.\n"
-        f"{num_days}일 일정으로 구성하세요. 각 날짜는 Day 1, Day 2 형태로 명시하세요.\n"
-        f"각 날짜마다 7~8개의 장소 키워드를 생성하세요.\n"
-        f"설명 없이 JSON만 출력하고, 장소 이름이 아닌 유형이나 특징(예: 바다 전망 카페, 숲속 산책로 등)을 생성하세요.\n"
-        f"추상적인 표현은 피하고, 실제 제주 지역에서 찾을 수 있을 법한 장소 유형으로 구성하세요.\n"
-        f"가능하면 플로깅, 제주 그린로드, 우도, 곶자왈 숲, 재생에너지 체험 등 친환경적인 장소를 우선 추천하세요.\n"
-        f"친환경 장소가 부족하면 일반적인 제주 관광지도 포함하세요.\n"
-        f"각 날짜는 도보 기준 1시간 이내 거리(5~6km) 장소로 구성하세요.\n"
-        f"공공기관은 포함하지 마세요.\n"
-        f"형식 예시: {{\"scheduleList\": [{{\"day\": \"Day 1\", \"keywords\": [\"오름 트래킹\", \"현지 식당\"]}}]}}\n"
-        f"입력 정보: 도시={request.city}, 지역={request.district}, 스타일={request.style}, 교통수단={', '.join(request.transport)}"
+        f"You are a travel keyword recommendation expert. Based on the information below, print out the place keywords in your itinerary in JSON format.\n"
+        f"Configure the {num_days} days schedule. Specify each date in the form Day 1 and Day 2.\n"
+        f"Generate 7 to 8 place keywords for each date.\n"
+        f"Just print out JSON without explanation, and create a type or feature (e.g., ocean view cafe, forest trail, etc.) that is not the name of the place.\n"
+        f"Avoid abstract expressions, and organize them into the types of places you'll find in the real Jeju area.\n"
+        f"If possible, recommend eco-friendly places such as plogging, Jeju Green Road, Udo, Gotjawal Forest, and renewable energy experiences first.\n"
+        f"If you lack eco-friendly places, include general Jeju tourist maps.\n"
+        f"Each date should consist of a distance (5 to 6 km) within an hour on foot.\n"
+        f"Do not include public institutions.\n"
+        f"Format example: {{\"scheduleList\": [{{\"day\": \"Day 1\", \"keywords\": [\"Oreum Tracking\", \"Local Restaurant\"]}}]}}\n"
+        f"Input info: City={request.city}, Area={request.district}, Style={request.style}, Transport={', '.join(request.transport)}"
     )
 
     response = model.generate_content(prompt)
@@ -135,11 +135,11 @@ def generate_schedule(request: TravelRequest) -> TravelResponse:
         content = re.sub(r"<(https?://[^>]+)>", r"\1", content)
         json_candidates = re.findall(r'{[\s\S]*}', content)
         if not json_candidates:
-            raise ValueError("Gemini 응답이 유효한 JSON 형식이 아닙니다.")
+            raise ValueError("Gemini response is not a valid JSON format.")
         parsed = json.loads(json_candidates[0])
 
         result = {"scheduleList": []}
-        fallback_keywords = ["곶자왈", "오름", "카페", "흑돼지", "감귤농장"]
+        fallback_keywords = ["Gotjawal", "Oreum", "Café", "Black Pig", "Tangerine Farm"]
 
         for i, day in enumerate(parsed.get("scheduleList", [])):
             keywords = day.get("keywords", [])[:10]
@@ -152,7 +152,7 @@ def generate_schedule(request: TravelRequest) -> TravelResponse:
                 if place:
                     coord = (place["lat"], place["lon"])
                     if coord in seen_coords:
-                        continue  # ✅ 동일 장소 완전 제외
+                        continue 
 
                     if prev_place:
                         dist_km = haversine_distance(prev_place["lat"], prev_place["lon"], place["lat"], place["lon"])
@@ -182,7 +182,7 @@ def generate_schedule(request: TravelRequest) -> TravelResponse:
                     seen_coords.add(coord)
 
             if i < num_days - 1 and places:
-                suite = get_place_from_kakao("숙소", request.district)
+                suite = get_place_from_kakao("lodging", request.district)
                 if suite:
                     coord = (suite["lat"], suite["lon"])
                     if coord not in seen_coords:
@@ -210,5 +210,5 @@ def generate_schedule(request: TravelRequest) -> TravelResponse:
         return TravelResponse(**result)
 
     except Exception as e:
-        print("❌ Gemini 응답 파싱 실패:", e)
-        raise ValueError("Gemini 응답이 유효한 JSON 형식이 아닙니다.")
+        print("❌Gemini response parsing failed:", e)
+        raise ValueError("Gemini response is not a valid JSON format.")
